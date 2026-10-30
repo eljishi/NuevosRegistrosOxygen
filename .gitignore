@@ -1,0 +1,18 @@
+﻿.env
+
+# datos reales de usuarios / tokens, nunca a git
+data/*.csv
+data/*.db
+data/*.txt
+ggleap-jwt.txt
+*.csv
+*.db
+
+# python
+backend/__pycache__/
+*.pyc
+
+# node / angular (ya debería estar en frontend/.gitignore, por si se sube desde la raíz)
+frontend/node_modules/
+frontend/dist/
+

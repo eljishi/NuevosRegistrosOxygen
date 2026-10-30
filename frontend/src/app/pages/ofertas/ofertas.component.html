@@ -1,0 +1,38 @@
+<section class="page-head">
+  <div>
+    <h2>Han vuelto</h2>
+    <p>Usuarios que recibieron oferta y volvieron al centro.</p>
+  </div>
+  <button class="refresh" (click)="load()" [disabled]="loading()">Refrescar</button>
+</section>
+
+@if (loading()) {
+  <div class="state"><div class="spinner"></div><span>Cargando…</span></div>
+} @else if (error()) {
+  <div class="state error">{{ error() }}</div>
+} @else {
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th><th>Usuario</th><th>Nombre</th>
+          <th>1ª vez vista</th><th>Volvió</th><th>Tardó</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of users(); track u.email) {
+          <tr>
+            <td class="email">{{ u.email }}</td>
+            <td>{{ u.username || '—' }}</td>
+            <td>{{ (u.firstName + ' ' + u.lastName).trim() || '—' }}</td>
+            <td class="mono">{{ fmt(u.firstSeenAt) }}</td>
+            <td class="mono">{{ fmt(u.offerClaimedAt) }}</td>
+            <td class="mono">{{ daysToReturn(u) }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="empty">Aún nadie ha vuelto.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

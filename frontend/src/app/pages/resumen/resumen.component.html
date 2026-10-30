@@ -1,0 +1,29 @@
+<section class="page-head">
+  <h2>Resumen</h2>
+  <p>Vista general del estado de la retención.</p>
+</section>
+
+@if (loading()) {
+  <div class="state"><div class="spinner"></div><span>Cargando…</span></div>
+} @else if (error()) {
+  <div class="state error">{{ error() }}</div>
+} @else {
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-label">Activos</span>
+      <span class="stat-value">{{ total() }}</span>
+    </div>
+    <div class="stat week">
+      <span class="stat-label">Semana (0-7d)</span>
+      <span class="stat-value">{{ counts().week }}</span>
+    </div>
+    <div class="stat month">
+      <span class="stat-label">Mes (8-31d)</span>
+      <span class="stat-value">{{ counts().month }}</span>
+    </div>
+    <div class="stat claimed">
+      <span class="stat-label">Reclamados</span>
+      <span class="stat-value">{{ counts().claimed }}</span>
+    </div>
+  </div>
+}
