@@ -19,6 +19,8 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    environment:
+      - TZ=Europe/Madrid
     volumes:
       - ./data:/app/data
       - ./.env:/app/.env:ro
