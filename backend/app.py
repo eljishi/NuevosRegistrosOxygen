@@ -68,7 +68,7 @@ def parse_ggleap_dt(s: str) -> datetime | None:
 
 
 def ingest(csv_path: Path) -> dict:
-    """Insert new users (created in the last 24h) and update last_visit for tracked ones.
+    """Insert users not yet tracked (the full export) and update last_visit for tracked ones.
 
     Also sets offer_claimed_at when a tracked user's Last Visit jumps past first_seen + buffer,
     while the offer window is still open.
@@ -170,6 +170,8 @@ def _brevo_upsert_contact(api_key: str, email: str, attrs: dict, list_id: int) -
 def send_offers(dry_run: bool = False) -> dict:
     """Añade a Brevo (lista BREVO_LIST_ID) los usuarios cuya primera captura fue hace 24-48h.
 
+    Solo usuarios que han iniciado sesión alguna vez (last_visit no vacío).
+
     El drip (bienvenida + 3d + 21d + 7d) lo dispara Brevo al entrar en la lista.
 
     Config vía env:
@@ -190,6 +192,7 @@ def send_offers(dry_run: bool = False) -> dict:
         """SELECT * FROM users
            WHERE offer_sent_at IS NULL
              AND offer_claimed_at IS NULL
+             AND last_visit IS NOT NULL
              AND first_seen_at >= ?""",
         (recent_cutoff.isoformat(),),
     ).fetchall()
@@ -231,7 +234,7 @@ def _demo() -> None:
             encoding="utf-8",
         )
         stats = ingest(csv_path)
-        assert stats["inserts"] == 1, stats
+        assert stats["inserts"] == 2, stats  # the full export is stored, old users included
         assert stats["reclaims"] == 0, stats
 
         later = (now + timedelta(days=2)).strftime("%m/%d/%Y %I:%M:%S %p")
@@ -246,6 +249,17 @@ def _demo() -> None:
         row = conn.execute("SELECT offer_claimed_at FROM users WHERE email = 'new@test.com'").fetchone()
         assert row["offer_claimed_at"], row["offer_claimed_at"]
         conn.close()
+
+        # Users who never logged in (empty Last Visit) must not get the offer.
+        csv_path.write_text(
+            "Username,Email,First Name,Last Name,Date of Birth,Created At,Last Visit\n"
+            f"visitor,visitor@test.com,Visi,Tor,,{new_dt},{new_dt}\n"
+            f"ghost,ghost@test.com,Ghost,User,,{new_dt},\n",
+            encoding="utf-8",
+        )
+        ingest(csv_path)
+        stats = send_offers(dry_run=True)
+        assert stats["sent"] == 1, stats
     print("demo OK")
 
 
