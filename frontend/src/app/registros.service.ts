@@ -26,7 +26,8 @@ export interface UsersResponse {
 @Injectable({ providedIn: 'root' })
 export class RegistrosService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:8000';
+  // Same origin: nginx (Docker) or proxy.conf.json (ng serve) forwards /api to the backend.
+  private base = '';
 
   list(status?: UserStatus): Observable<UsersResponse> {
     const q = status ? `?status=${status}` : '';
