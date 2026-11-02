@@ -6,4 +6,5 @@ COPY frontend/ .
 RUN npx ng build
 
 FROM nginx:alpine
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
