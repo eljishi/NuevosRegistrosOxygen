@@ -1,7 +1,7 @@
 <section class="page-head">
   <div>
     <h2>Usuarios</h2>
-    <p>Listado de registros capturados y su estado de oferta.</p>
+    <p>Usuarios en la cadena de Brevo y los pendientes de entrar.</p>
   </div>
   <button class="refresh" (click)="load()" [disabled]="loading()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -13,10 +13,9 @@
 
 <div class="toolbar">
   <div class="filters">
-    <button [class.active]="filter() === null" (click)="setFilter(null)">Activos <span>{{ totalCount() }}</span></button>
-    <button [class.active]="filter() === 'week'" (click)="setFilter('week')">Semana <span>{{ counts().week }}</span></button>
-    <button [class.active]="filter() === 'month'" (click)="setFilter('month')">Mes <span>{{ counts().month }}</span></button>
-    <button [class.active]="filter() === 'claimed'" (click)="setFilter('claimed')">Reclamados <span>{{ counts().claimed }}</span></button>
+    <button [class.active]="filter() === null" (click)="setFilter(null)">Todos <span>{{ totalCount() }}</span></button>
+    <button [class.active]="filter() === 'pending'" (click)="setFilter('pending')">Pendientes <span>{{ counts().pending }}</span></button>
+    <button [class.active]="filter() === 'sent'" (click)="setFilter('sent')">En Brevo <span>{{ counts().sent }}</span></button>
   </div>
   <div class="search">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -38,28 +37,28 @@
     <table>
       <thead>
         <tr>
-          <th>Estado</th><th>En Brevo</th><th>Email</th><th>Usuario</th>
-          <th>1ª vez vista</th><th>Caduca</th><th>Última visita</th>
-          <th>Enviado</th><th>Reclamado</th><th></th>
+          <th>Brevo</th><th>Email</th><th>Usuario</th>
+          <th>Registro</th><th>Entrada en Brevo</th><th>Última visita</th>
+          <th>Reclamado</th><th></th>
         </tr>
       </thead>
       <tbody>
         @for (u of visibleUsers(); track u.email) {
           <tr>
-            <td><span class="badge" [class]="u.status">{{ u.status }}</span></td>
             <td>
-              @if (u.offerSentAt) {
-                <span class="brevo yes" title="Añadido a lista Brevo">✓ Sí</span>
+              @if (u.brevoState === 'sent') {
+                <span class="brevo yes" title="Añadido a la lista de Brevo">✓ En Brevo</span>
               } @else {
-                <span class="brevo no" title="Aún no enviado">✗ No</span>
+                <span class="brevo pending" title="Entrará en la siguiente ronda tras 24 h del registro">⏳ Pendiente</span>
               }
             </td>
             <td class="email">{{ u.email }}</td>
             <td>{{ u.username || '—' }}</td>
             <td class="mono">{{ fmt(u.firstSeenAt) }}</td>
-            <td class="mono">{{ fmt(u.offerExpiresAt) }}</td>
+            <td class="mono" [title]="u.brevoState === 'sent' ? 'Fecha de entrada' : 'A partir de esta hora'">
+              {{ u.brevoState === 'sent' ? fmt(u.offerSentAt) : 'desde ' + fmt(u.entersAt) }}
+            </td>
             <td class="mono">{{ fmt(u.lastVisit) }}</td>
-            <td class="mono">{{ fmt(u.offerSentAt) }}</td>
             <td class="mono">{{ fmt(u.offerClaimedAt) }}</td>
             <td>
               <button class="action" [class.undo]="u.offerClaimedAt" (click)="toggleClaim(u)">
@@ -68,7 +67,7 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="10" class="empty">Sin usuarios para este filtro.</td></tr>
+          <tr><td colspan="8" class="empty">Sin usuarios para este filtro.</td></tr>
         }
       </tbody>
     </table>

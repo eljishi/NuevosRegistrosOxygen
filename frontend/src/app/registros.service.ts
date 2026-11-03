@@ -23,6 +23,18 @@ export interface UsersResponse {
   counts: Record<UserStatus, number>;
 }
 
+export type BrevoState = 'pending' | 'sent';
+
+export interface ChainUser extends User {
+  brevoState: BrevoState;
+  entersAt: string;
+}
+
+export interface ChainResponse {
+  users: ChainUser[];
+  counts: Record<BrevoState, number>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RegistrosService {
   private http = inject(HttpClient);
@@ -32,6 +44,11 @@ export class RegistrosService {
   list(status?: UserStatus): Observable<UsersResponse> {
     const q = status ? `?status=${status}` : '';
     return this.http.get<UsersResponse>(`${this.base}/api/users${q}`);
+  }
+
+  chain(state?: BrevoState): Observable<ChainResponse> {
+    const q = state ? `?state=${state}` : '';
+    return this.http.get<ChainResponse>(`${this.base}/api/chain${q}`);
   }
 
   markClaimed(email: string): Observable<unknown> {

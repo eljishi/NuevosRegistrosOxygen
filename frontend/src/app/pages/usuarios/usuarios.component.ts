@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RegistrosService, User, UserStatus, UsersResponse } from '../../registros.service';
+import { BrevoState, ChainResponse, ChainUser, RegistrosService } from '../../registros.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -13,9 +13,9 @@ import { RegistrosService, User, UserStatus, UsersResponse } from '../../registr
 export class UsuariosComponent implements OnInit {
   private api = inject(RegistrosService);
 
-  users = signal<User[]>([]);
-  counts = signal<Record<UserStatus, number>>({ week: 0, month: 0, claimed: 0, expired: 0 });
-  filter = signal<UserStatus | null>(null);
+  users = signal<ChainUser[]>([]);
+  counts = signal<Record<BrevoState, number>>({ pending: 0, sent: 0 });
+  filter = signal<BrevoState | null>(null);
   search = signal('');
   loading = signal(false);
   error = signal<string | null>(null);
@@ -36,8 +36,8 @@ export class UsuariosComponent implements OnInit {
   load() {
     this.loading.set(true);
     this.error.set(null);
-    this.api.list(this.filter() ?? undefined).subscribe({
-      next: (r: UsersResponse) => {
+    this.api.chain(this.filter() ?? undefined).subscribe({
+      next: (r: ChainResponse) => {
         this.users.set(r.users);
         this.counts.set(r.counts);
         this.loading.set(false);
@@ -49,9 +49,9 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  setFilter(f: UserStatus | null) { this.filter.set(f); this.load(); }
+  setFilter(f: BrevoState | null) { this.filter.set(f); this.load(); }
 
-  toggleClaim(u: User) {
+  toggleClaim(u: ChainUser) {
     const op = u.offerClaimedAt ? this.api.unmarkClaimed(u.email) : this.api.markClaimed(u.email);
     op.subscribe({ next: () => this.load() });
   }
@@ -68,6 +68,6 @@ export class UsuariosComponent implements OnInit {
 
   totalCount(): number {
     const c = this.counts();
-    return c.week + c.month + c.claimed;
+    return c.pending + c.sent;
   }
 }

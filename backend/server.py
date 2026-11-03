@@ -12,7 +12,9 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import connect, ingest, send_offers, status_of
+from datetime import timedelta
+
+from app import SEND_DELAY_HOURS, brevo_state, connect, ingest, send_offers, status_of
 
 DATA_CSV = Path(__file__).resolve().parent.parent / "data" / "nuevos.csv"
 
@@ -54,6 +56,29 @@ def list_users(status: str | None = None):
     users = [u for u in users if u["status"] != "expired"]
     if status:
         users = [u for u in users if u["status"] == status]
+    return {"users": users, "counts": counts}
+
+
+@app.get("/api/chain")
+def list_chain(state: str | None = None):
+    """Users already in the Brevo chain or pending to enter it."""
+    now = datetime.now()
+    conn = connect()
+    rows = conn.execute("SELECT * FROM users ORDER BY first_seen_at DESC").fetchall()
+    conn.close()
+    users = []
+    counts = {"pending": 0, "sent": 0}
+    for r in rows:
+        st = brevo_state(r, now)
+        if not st:
+            continue
+        counts[st] += 1
+        if state and st != state:
+            continue
+        u = _row_to_user(r, now)
+        u["brevoState"] = st
+        u["entersAt"] = (datetime.fromisoformat(r["first_seen_at"]) + timedelta(hours=SEND_DELAY_HOURS)).isoformat()
+        users.append(u)
     return {"users": users, "counts": counts}
 
 

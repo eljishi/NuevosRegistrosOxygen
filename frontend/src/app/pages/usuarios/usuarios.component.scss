@@ -85,7 +85,7 @@ table {
   display: inline-block; padding: .22rem .6rem; border-radius: 6px;
   font-size: .72rem; font-weight: 600; white-space: nowrap;
   &.yes { background: #dcfce7; color: #15803d; }
-  &.no  { background: #fee2e2; color: #b91c1c; }
+  &.pending { background: #fef3c7; color: #b45309; }
 }
 
 .action {

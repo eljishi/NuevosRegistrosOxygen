@@ -162,6 +162,22 @@ def status_of(row: sqlite3.Row, now: datetime) -> str:
     return "expired"
 
 
+def brevo_state(row: sqlite3.Row, now: datetime) -> str | None:
+    """'sent' if already in Brevo, 'pending' if send_offers will add them once
+    SEND_DELAY_HOURS have passed, None if they will never enter."""
+    if row["offer_sent_at"]:
+        return "sent"
+    if (
+        row["offer_claimed_at"]
+        or not row["last_visit"]
+        or not row["birth_date"]
+        or datetime.fromisoformat(row["first_seen_at"]) < now - timedelta(hours=SEND_WINDOW_HOURS)
+        or age_on(date.fromisoformat(row["birth_date"]), now.date()) < MIN_OFFER_AGE
+    ):
+        return None
+    return "pending"
+
+
 def list_users(status_filter: str | None = None) -> None:
     now = datetime.now()
     conn = connect()
